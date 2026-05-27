@@ -13,7 +13,11 @@ export default function Notifications({ notifications, onMarkRead }) {
             <span className="notif-time">
               {new Date(n.created_at).toLocaleString()}
             </span>
-            <button className="dismiss-btn" onClick={() => onMarkRead(n.id)}>
+            <button
+              className="dismiss-btn"
+              aria-label={`Dismiss: ${n.message}`}
+              onClick={() => onMarkRead(n.id)}
+            >
               Dismiss
             </button>
           </li>
