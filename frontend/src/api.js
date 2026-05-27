@@ -35,4 +35,6 @@ export const api = {
   deleteTodo: (id) => request("DELETE", `/api/todos/${id}`),
 
   getNotifications: () => request("GET", "/api/notifications"),
+
+  markNotificationRead: (id) => request("PATCH", `/api/notifications/${id}/read`),
 };
