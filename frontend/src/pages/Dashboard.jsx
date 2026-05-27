@@ -57,6 +57,8 @@ export default function Dashboard() {
 
       {error && <p className="error">{error}</p>}
 
+      <Notifications notifications={notifications} onMarkRead={handleMarkRead} />
+
       <section>
         <h2>Add Todo</h2>
         <TodoForm onSubmit={handleCreate} />
@@ -79,8 +81,6 @@ export default function Dashboard() {
           </ul>
         )}
       </section>
-
-      <Notifications notifications={notifications} onMarkRead={handleMarkRead} />
     </div>
   );
 }

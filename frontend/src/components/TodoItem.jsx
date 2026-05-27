@@ -53,7 +53,7 @@ export default function TodoItem({ todo, onUpdate, onDelete }) {
       </div>
       <div className="todo-actions">
         <button onClick={() => setEditing(true)}>Edit</button>
-        <button onClick={() => onDelete(todo.id)}>Delete</button>
+        <button onClick={() => window.confirm("Delete this todo?") && onDelete(todo.id)}>Delete</button>
       </div>
     </li>
   );
