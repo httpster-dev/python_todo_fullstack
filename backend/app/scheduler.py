@@ -39,7 +39,8 @@ def send_reminder(todo_id: int):
         notification = models.Notification(
             user_id=todo.user_id,
             todo_id=todo.id,
-            message=f"Reminder: '{todo.title}' is due {todo.due_date.strftime('%Y-%m-%d %H:%M')} UTC",
+            due_date=todo.due_date,
+            message=f"Reminder: '{todo.title}' is due soon",
             status="sent",
         )
         db.add(notification)

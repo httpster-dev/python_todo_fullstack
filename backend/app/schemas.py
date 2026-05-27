@@ -57,6 +57,7 @@ class NotificationResponse(BaseModel):
 
     id: int
     todo_id: Optional[int]
+    due_date: Optional[datetime] = None
     message: str
     status: str
     created_at: datetime

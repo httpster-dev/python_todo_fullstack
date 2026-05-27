@@ -20,6 +20,9 @@ export default function Notifications({ notifications, onMarkRead }) {
           <li key={n.id} className="notification-item">
             <div className="notif-body">
               <span className="notif-message">{n.message}</span>
+              {n.due_date && (
+                <span className="notif-due">{formatLocalTime(n.due_date)}</span>
+              )}
               <span className="notif-time">
                 Received {formatLocalTime(n.created_at)}
               </span>

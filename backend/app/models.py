@@ -44,6 +44,7 @@ class Notification(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     todo_id = Column(Integer, ForeignKey("todos.id", ondelete="SET NULL"), nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
     message = Column(String, nullable=False)
     status = Column(String, default="sent")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
