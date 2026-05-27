@@ -93,7 +93,7 @@ When a todo is created or updated with a due date, a background job is scheduled
 
 ### Frontend
 
-React with Vite. Auth state is held in React context backed by `localStorage`. The dashboard polls the API every 10 seconds to surface new notifications as reminder jobs complete. All API calls are centralized in `src/api.js`.
+React with Vite. Auth state is held in React context backed by `localStorage`. The dashboard polls the API every 10 seconds to surface new notifications as reminder jobs complete. All API calls are centralized in `src/api.js`. Notifications can be marked as read via `PATCH /api/notifications/{id}/read`, which the frontend uses to distinguish new vs already-seen items.
 
 ---
 
@@ -126,9 +126,17 @@ Three bugs surfaced while running the app locally for the first time — each fo
 
 3. **Deleting a todo raised a NOT NULL constraint error** — SQLAlchemy's default cascade behaviour tries to null out foreign keys on child records before deleting the parent. Since `notifications.todo_id` was non-nullable, this crashed with an integrity error. The correct fix (per the spec, which says notifications should remain as history) was to make `todo_id` nullable with `ondelete="SET NULL"`, so the notification record is preserved but the link to the deleted todo is cleared.
 
+A second pass of end-to-end testing surfaced additional issues fixed before submission:
+
+1. **`datetime.utcnow()` is deprecated in Python 3.12+** — Used throughout models, auth, and tests. Replaced with `datetime.now(timezone.utc)` everywhere. SQLAlchemy column defaults require a callable, so these were wrapped in a `_utcnow` helper rather than called inline.
+
+2. **Clearing a todo's due date via PUT silently failed** — The update logic used `body.due_date is not None` to detect a change, which meant sending `due_date: null` was indistinguishable from omitting the field entirely. The scheduled reminder was never cancelled. Fixed by checking `"due_date" in body.model_fields_set` (Pydantic tracks which fields were explicitly included in the request), so an explicit null correctly triggers `cancel_reminder()`.
+
 ### Human architectural decisions
 
 - Chose SQLite over PostgreSQL to keep local setup to a single command
 - Decided reminder timing (24h before due date, 15s fallback for demo) rather than accepting a generic suggestion
 - Chose `replace_existing=True` on APScheduler jobs as the explicit race condition solution rather than a separate lock/dedup table
 - Kept the frontend deliberately minimal — this is not a design exercise
+- Chose a compound index on `(user_id, created_at)` over a simple `user_id` index — covers the common `list_todos` query pattern and makes the `ORDER BY created_at DESC` free, without needing a separate index for sorting
+- Chose `model_fields_set` to detect an explicit `null` on `due_date` during PUT — a `None`-check alone can't distinguish "field was omitted" from "field was explicitly cleared", which matters for cancelling the scheduled reminder correctly
