@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { api } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Register({ onSwitch }) {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -11,7 +13,8 @@ export default function Register({ onSwitch }) {
     setError(null);
     try {
       await api.register(email, password);
-      onSwitch(); // go to login
+      const data = await api.login(email, password);
+      login(data.access_token);
     } catch (err) {
       setError(err.message);
     }
