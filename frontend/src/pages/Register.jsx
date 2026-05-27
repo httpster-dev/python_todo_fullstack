@@ -15,6 +15,7 @@ export default function Register({ onSwitch }) {
       await api.register(email, password);
       const data = await api.login(email, password);
       login(data.access_token);
+      onSwitch();
     } catch (err) {
       setError(err.message);
     }
