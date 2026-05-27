@@ -14,7 +14,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     todos = relationship("Todo", back_populates="owner", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
@@ -29,10 +29,10 @@ class Todo(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     completed = Column(Boolean, default=False)
-    due_date = Column(DateTime, nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
     reminder_scheduled = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     owner = relationship("User", back_populates="todos")
     notifications = relationship("Notification", back_populates="todo")
@@ -46,7 +46,7 @@ class Notification(Base):
     todo_id = Column(Integer, ForeignKey("todos.id", ondelete="SET NULL"), nullable=True)
     message = Column(String, nullable=False)
     status = Column(String, default="sent")
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
 
     user = relationship("User", back_populates="notifications")
     todo = relationship("Todo", back_populates="notifications")
