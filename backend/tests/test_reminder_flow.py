@@ -58,6 +58,7 @@ def test_reminder_creates_notification(db, user):
     assert notification is not None
     assert "Finish report" in notification.message
     assert notification.status == "sent"
+    assert notification.due_date == todo.due_date
     assert todo.reminder_scheduled is False
 
 
