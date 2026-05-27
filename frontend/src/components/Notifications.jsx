@@ -1,3 +1,12 @@
+function formatLocalTime(isoString) {
+  return new Date(isoString).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export default function Notifications({ notifications, onMarkRead }) {
   const unread = notifications.filter((n) => n.status === "sent");
 
@@ -9,10 +18,12 @@ export default function Notifications({ notifications, onMarkRead }) {
       <ul>
         {unread.map((n) => (
           <li key={n.id} className="notification-item">
-            <span>{n.message}</span>
-            <span className="notif-time">
-              {new Date(n.created_at).toLocaleString()}
-            </span>
+            <div className="notif-body">
+              <span className="notif-message">{n.message}</span>
+              <span className="notif-time">
+                Received {formatLocalTime(n.created_at)}
+              </span>
+            </div>
             <button
               className="dismiss-btn"
               aria-label={`Dismiss: ${n.message}`}

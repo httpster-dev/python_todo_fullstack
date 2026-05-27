@@ -148,13 +148,23 @@ input[type="datetime-local"] {
 
 .notification-item {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 12px;
   font-size: 0.9rem;
   padding: 8px 10px;
   background: #fffbe6;
   border-left: 3px solid #f5a623;
   border-radius: 4px;
 }
+
+.notif-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.notif-message { font-weight: 500; }
 
 .notif-time { color: #999; font-size: 0.8rem; }
 
