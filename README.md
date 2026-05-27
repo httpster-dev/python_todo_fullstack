@@ -143,4 +143,5 @@ A second pass of end-to-end testing surfaced additional issues fixed before subm
 - Auto-login after registration rather than redirecting to the login page — user already provided their credentials, making them type again is unnecessary friction
 - Notifications surfaced at the top of the dashboard rather than the bottom — a reminder is time-sensitive and should be the first thing a user sees
 - Delete requires a browser confirmation prompt — destructive action with no undo, the extra click is worth it
+- Added compound index `(user_id, created_at)` on `notifications` for the same reason as `todos` — covers the `list_notifications` scan and makes `ORDER BY created_at DESC` free. Also added a `todo_id` index so SQLAlchemy's cascade-delete lookup (SELECT before DELETE) doesn't full-scan the table
 - Notifications cascade-delete with their todo — a reminder for a deleted todo is noise, not useful history. The due date is now stored directly on the notification record so it's available before deletion, but once a user deletes a task they've made their intent clear and the unread reminder should go with it
