@@ -43,6 +43,11 @@ export default function Dashboard() {
     await fetchAll();
   }
 
+  async function handleMarkRead(id) {
+    const updated = await api.markNotificationRead(id);
+    setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)));
+  }
+
   return (
     <div className="dashboard">
       <header>
@@ -75,7 +80,7 @@ export default function Dashboard() {
         )}
       </section>
 
-      <Notifications notifications={notifications} />
+      <Notifications notifications={notifications} onMarkRead={handleMarkRead} />
     </div>
   );
 }
