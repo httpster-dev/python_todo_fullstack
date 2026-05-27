@@ -124,7 +124,7 @@ Three bugs surfaced while running the app locally for the first time — each fo
 
 2. **APScheduler scheduled jobs in local time instead of UTC** — `datetime.utcnow()` returns a naive datetime (no timezone info). APScheduler interprets naive datetimes as local time. On a machine set to UTC-6, this caused every job to be scheduled 6 hours later than intended. Fixed by pinning the scheduler to UTC (`timezone="UTC"`) and switching all datetime calls to `datetime.now(timezone.utc)`.
 
-3. **Deleting a todo raised a NOT NULL constraint error** — SQLAlchemy's default cascade behaviour tries to null out foreign keys on child records before deleting the parent. Since `notifications.todo_id` was non-nullable, this crashed with an integrity error. The correct fix (per the spec, which says notifications should remain as history) was to make `todo_id` nullable with `ondelete="SET NULL"`, so the notification record is preserved but the link to the deleted todo is cleared.
+3. **Deleting a todo raised a NOT NULL constraint error** — SQLAlchemy's default cascade behaviour tries to null out foreign keys on child records before deleting the parent. Since `notifications.todo_id` was non-nullable, this crashed with an integrity error. Initially fixed with `ondelete="SET NULL"` to preserve notification history — later revised (see human decisions) to cascade-delete notifications with their todo instead.
 
 A second pass of end-to-end testing surfaced additional issues fixed before submission:
 
@@ -143,3 +143,4 @@ A second pass of end-to-end testing surfaced additional issues fixed before subm
 - Auto-login after registration rather than redirecting to the login page — user already provided their credentials, making them type again is unnecessary friction
 - Notifications surfaced at the top of the dashboard rather than the bottom — a reminder is time-sensitive and should be the first thing a user sees
 - Delete requires a browser confirmation prompt — destructive action with no undo, the extra click is worth it
+- Notifications cascade-delete with their todo — a reminder for a deleted todo is noise, not useful history. The due date is now stored directly on the notification record so it's available before deletion, but once a user deletes a task they've made their intent clear and the unread reminder should go with it

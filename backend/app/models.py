@@ -35,7 +35,7 @@ class Todo(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     owner = relationship("User", back_populates="todos")
-    notifications = relationship("Notification", back_populates="todo")
+    notifications = relationship("Notification", back_populates="todo", cascade="all, delete-orphan")
 
 
 class Notification(Base):
@@ -43,7 +43,8 @@ class Notification(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    todo_id = Column(Integer, ForeignKey("todos.id", ondelete="SET NULL"), nullable=True)
+    todo_id = Column(Integer, ForeignKey("todos.id", ondelete="CASCADE"), nullable=False)
+    due_date = Column(DateTime(timezone=True), nullable=True)
     message = Column(String, nullable=False)
     status = Column(String, default="sent")
     created_at = Column(DateTime(timezone=True), default=_utcnow)

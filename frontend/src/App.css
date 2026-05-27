@@ -166,6 +166,7 @@ input[type="datetime-local"] {
 
 .notif-message { font-weight: 500; }
 
+.notif-due { color: #e07800; font-size: 0.85rem; font-weight: 500; }
 .notif-time { color: #999; font-size: 0.8rem; }
 
 /* Shared */
