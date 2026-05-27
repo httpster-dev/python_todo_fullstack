@@ -3,7 +3,7 @@ Critical path test: create todo with due date → reminder fires → notificatio
 Also covers: completed todo skip, deleted todo skip.
 """
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -45,7 +45,7 @@ def test_reminder_creates_notification(db, user):
     todo = models.Todo(
         user_id=user.id,
         title="Finish report",
-        due_date=datetime.utcnow() + timedelta(hours=1),
+        due_date=datetime.now(timezone.utc) + timedelta(hours=1),
     )
     db.add(todo)
     db.commit()
@@ -66,7 +66,7 @@ def test_reminder_skips_completed_todo(db, user):
         user_id=user.id,
         title="Already done",
         completed=True,
-        due_date=datetime.utcnow() + timedelta(hours=1),
+        due_date=datetime.now(timezone.utc) + timedelta(hours=1),
     )
     db.add(todo)
     db.commit()
