@@ -15,7 +15,12 @@ def list_todos(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    return db.query(models.Todo).filter(models.Todo.user_id == current_user.id).all()
+    return (
+        db.query(models.Todo)
+        .filter(models.Todo.user_id == current_user.id)
+        .order_by(models.Todo.created_at.desc())
+        .all()
+    )
 
 
 @router.post("", response_model=schemas.TodoResponse, status_code=201)
@@ -71,7 +76,7 @@ def update_todo(
     if body.completed is not None:
         todo.completed = body.completed
 
-    due_date_changed = body.due_date is not None and body.due_date != todo.due_date
+    due_date_changed = "due_date" in body.model_fields_set and body.due_date != todo.due_date
     if due_date_changed:
         todo.due_date = body.due_date
 

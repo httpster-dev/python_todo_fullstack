@@ -10,7 +10,13 @@ import os
 from .database import get_db
 from . import models
 
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-production")
+import logging as _logging
+
+_secret = os.getenv("SECRET_KEY")
+if not _secret:
+    _logging.warning("SECRET_KEY is not set — using insecure default. Set SECRET_KEY env var before deploying.")
+    _secret = "dev-secret-change-in-production"
+SECRET_KEY = _secret
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
