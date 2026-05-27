@@ -7,6 +7,12 @@ function formatLocalTime(isoString) {
   });
 }
 
+function formatLocalDate(isoString) {
+  return new Date(isoString).toLocaleDateString(undefined, {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
 export default function Notifications({ notifications, onMarkRead }) {
   const unread = notifications.filter((n) => n.status === "sent");
 
@@ -21,7 +27,7 @@ export default function Notifications({ notifications, onMarkRead }) {
             <div className="notif-body">
               <span className="notif-message">{n.message}</span>
               {n.due_date && (
-                <span className="notif-due">{formatLocalTime(n.due_date)}</span>
+                <span className="notif-due">{formatLocalDate(n.due_date)}</span>
               )}
               <span className="notif-time">
                 Received {formatLocalTime(n.created_at)}

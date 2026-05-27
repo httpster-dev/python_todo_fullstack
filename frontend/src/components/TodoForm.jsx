@@ -4,7 +4,7 @@ export default function TodoForm({ onSubmit, initial = {}, onCancel }) {
   const [title, setTitle] = useState(initial.title || "");
   const [description, setDescription] = useState(initial.description || "");
   const [dueDate, setDueDate] = useState(
-    initial.due_date ? initial.due_date.slice(0, 16) : ""
+    initial.due_date ? new Date(initial.due_date).toLocaleDateString('en-CA') : ""
   );
   const [error, setError] = useState(null);
 
@@ -15,7 +15,7 @@ export default function TodoForm({ onSubmit, initial = {}, onCancel }) {
       await onSubmit({
         title,
         description: description || null,
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        due_date: dueDate ? new Date(dueDate + 'T00:00:00').toISOString() : null,
       });
       if (!initial.id) {
         setTitle("");
@@ -43,7 +43,7 @@ export default function TodoForm({ onSubmit, initial = {}, onCancel }) {
         onChange={(e) => setDescription(e.target.value)}
       />
       <input
-        type="datetime-local"
+        type="date"
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
       />

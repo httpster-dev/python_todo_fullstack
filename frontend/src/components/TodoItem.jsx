@@ -15,7 +15,9 @@ export default function TodoItem({ todo, onUpdate, onDelete }) {
 
   function formatDate(iso) {
     if (!iso) return null;
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short", day: "numeric", year: "numeric",
+    });
   }
 
   if (editing) {
