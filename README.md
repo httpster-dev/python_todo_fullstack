@@ -81,7 +81,7 @@ Passwords are hashed with bcrypt directly. Raw passwords are never stored or log
 
 When a todo is created or updated with a due date, a background job is scheduled using APScheduler's `BackgroundScheduler`. The job runs outside the request cycle — the HTTP response returns immediately and the reminder fires separately.
 
-**Timing:** Jobs fire 24 hours before the due date. If the due date is already within 24 hours, the job fires 15 seconds after scheduling (for local demo visibility).
+**Timing:** Jobs fire 24 hours before the due date. If the due date is already within 24 hours, the job fires 5 seconds after scheduling (for local demo visibility).
 
 **Persistence:** APScheduler is configured with a SQLite-backed job store (`scheduler.db`). This means scheduled jobs survive application restarts — the scheduler reloads them automatically on startup.
 
@@ -135,7 +135,7 @@ A second pass of end-to-end testing surfaced additional issues fixed before subm
 ### Human architectural decisions
 
 - Chose SQLite over PostgreSQL to keep local setup to a single command
-- Decided reminder timing (24h before due date, 15s fallback for demo) rather than accepting a generic suggestion
+- Decided reminder timing (24h before due date, 5s fallback for demo) rather than accepting a generic suggestion
 - Chose `replace_existing=True` on APScheduler jobs as the explicit race condition solution rather than a separate lock/dedup table
 - Kept the frontend deliberately minimal — this is not a design exercise
 - Chose a compound index on `(user_id, created_at)` over a simple `user_id` index — covers the common `list_todos` query pattern and makes the `ORDER BY created_at DESC` free, without needing a separate index for sorting
