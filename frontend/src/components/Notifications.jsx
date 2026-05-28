@@ -10,6 +10,7 @@ function formatLocalTime(isoString) {
 function formatLocalDate(isoString) {
   return new Date(isoString).toLocaleDateString(undefined, {
     month: "short", day: "numeric", year: "numeric",
+    timeZone: "UTC",
   });
 }
 

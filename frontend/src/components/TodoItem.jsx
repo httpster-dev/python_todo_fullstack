@@ -17,6 +17,7 @@ export default function TodoItem({ todo, onUpdate, onDelete }) {
     if (!iso) return null;
     return new Date(iso).toLocaleDateString(undefined, {
       month: "short", day: "numeric", year: "numeric",
+      timeZone: "UTC",
     });
   }
 
