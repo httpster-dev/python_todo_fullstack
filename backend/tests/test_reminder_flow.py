@@ -102,8 +102,14 @@ def test_reminder_skips_existing_unread_notification(db, user):
 
     assert db.query(models.Notification).filter_by(todo_id=todo.id).count() == 1
 
-    # Due date edited — second reminder fires while first is still unread
+    # Simulate due date edit: reschedule sets reminder_scheduled back to True
+    todo.reminder_scheduled = True
+    db.commit()
+
+    # Second reminder fires while first notification is still unread
     with patch("app.scheduler.SessionLocal", return_value=db):
         send_reminder(todo.id)
 
     assert db.query(models.Notification).filter_by(todo_id=todo.id).count() == 1
+    refreshed = db.query(models.Todo).filter_by(id=todo.id).first()
+    assert refreshed.reminder_scheduled is False
