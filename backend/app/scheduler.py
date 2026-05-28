@@ -77,7 +77,7 @@ def schedule_reminder(todo_id: int, due_date: datetime):
     run_at = due_date - timedelta(hours=24)
     if run_at <= datetime.now(timezone.utc):
         # Due date is within 24 hours (or past) — fire soon for demo visibility
-        run_at = datetime.now(timezone.utc) + timedelta(seconds=5)
+        run_at = datetime.now(timezone.utc) + timedelta(seconds=3)
 
     scheduler.add_job(
         send_reminder,
