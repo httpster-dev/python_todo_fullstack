@@ -36,6 +36,13 @@ def send_reminder(todo_id: int):
             logger.info(f"Reminder skipped: todo {todo_id} already completed")
             return
 
+        existing = db.query(models.Notification).filter_by(
+            todo_id=todo.id, status="sent"
+        ).first()
+        if existing:
+            logger.info(f"Reminder skipped: unread notification already exists for todo {todo_id}")
+            return
+
         notification = models.Notification(
             user_id=todo.user_id,
             todo_id=todo.id,

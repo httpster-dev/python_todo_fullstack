@@ -84,3 +84,26 @@ def test_reminder_skips_deleted_todo(db, user):
         send_reminder(9999)
 
     assert db.query(models.Notification).count() == 0
+
+
+def test_reminder_skips_existing_unread_notification(db, user):
+    todo = models.Todo(
+        user_id=user.id,
+        title="Edit me",
+        due_date=datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    db.add(todo)
+    db.commit()
+    db.refresh(todo)
+
+    # First reminder fires — creates a notification
+    with patch("app.scheduler.SessionLocal", return_value=db):
+        send_reminder(todo.id)
+
+    assert db.query(models.Notification).filter_by(todo_id=todo.id).count() == 1
+
+    # Due date edited — second reminder fires while first is still unread
+    with patch("app.scheduler.SessionLocal", return_value=db):
+        send_reminder(todo.id)
+
+    assert db.query(models.Notification).filter_by(todo_id=todo.id).count() == 1
