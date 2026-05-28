@@ -15,7 +15,13 @@ async function request(method, path, body) {
   if (res.status === 204) return null;
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || "Request failed");
+  if (!res.ok) {
+    const detail = data.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((e) => e.msg).join(", ")
+      : detail || "Request failed";
+    throw new Error(message);
+  }
   return data;
 }
 
