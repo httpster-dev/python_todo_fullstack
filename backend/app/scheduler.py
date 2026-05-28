@@ -86,6 +86,7 @@ def schedule_reminder(todo_id: int, due_date: datetime):
         args=[todo_id],
         id=f"reminder_{todo_id}",
         replace_existing=True,  # atomic replace — prevents duplicate jobs
+        misfire_grace_time=None,  # always fire after a restart, no matter how late
     )
     logger.info(f"Reminder scheduled for todo {todo_id} at {run_at} UTC")
 

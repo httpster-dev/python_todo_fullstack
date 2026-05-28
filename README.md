@@ -83,7 +83,7 @@ When a todo is created or updated with a due date, a background job is scheduled
 
 **Timing:** Jobs fire 24 hours before the due date. If the due date is already within 24 hours, the job fires 3 seconds after scheduling (for local demo visibility).
 
-**Persistence:** APScheduler is configured with a SQLite-backed job store (`scheduler.db`). This means scheduled jobs survive application restarts — the scheduler reloads them automatically on startup.
+**Persistence:** APScheduler is configured with a SQLite-backed job store (`scheduler.db`). This means scheduled jobs survive application restarts — the scheduler reloads them automatically on startup. Jobs are configured with `misfire_grace_time=None` so that any job whose scheduled time passed while the server was down fires immediately on restart, rather than being silently discarded by APScheduler's default 1-second grace window.
 
 **Race condition handling:** Each todo's reminder job uses `reminder_{todo_id}` as its job ID, combined with `replace_existing=True`. This makes scheduling idempotent — if a due date changes, the existing job is atomically replaced rather than duplicated. No separate deduplication logic is needed.
 
@@ -145,6 +145,7 @@ A second pass of end-to-end testing surfaced additional issues fixed before subm
 ### Human architectural decisions
 
 - Chose `replace_existing=True` on APScheduler jobs as the explicit race condition solution — using the todo ID as the job ID makes scheduling idempotent; editing a due date atomically replaces the existing job rather than risking duplicates or requiring a separate lock/dedup table
+- Set `misfire_grace_time=None` on all scheduled jobs — APScheduler's default 1-second grace window silently discards jobs whose run time passed while the server was down; `None` ensures they always fire on restart regardless of delay
 - Chose `model_fields_set` to detect an explicit `null` on `due_date` during PUT — a `None`-check alone can't distinguish "field was omitted" from "field was explicitly cleared", which matters for correctly cancelling the scheduled reminder
 - Added compound index `(user_id, created_at)` on both `todos` and `notifications` — covers the common list query pattern and makes `ORDER BY created_at DESC` free without a separate index. Also added a `todo_id` index on `notifications` so SQLAlchemy's cascade-delete lookup doesn't full-scan the table
 - Notifications cascade-delete with their todo — a reminder for a deleted todo is noise, not useful history. The due date is stored directly on the notification record so it's available at fire time, independent of the todo's lifecycle
