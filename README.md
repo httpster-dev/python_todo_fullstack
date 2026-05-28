@@ -63,23 +63,23 @@ pytest tests/ -v
 
 ### Backend Framework: FastAPI
 
-FastAPI handles routing, request validation, and auth middleware. Route handlers are organized by resource (`auth`, `todos`, `notifications`) using `APIRouter` — the same separation-of-concerns you'd apply in a Rails controller structure. Pydantic schemas define what shape data is accepted and returned, functioning like Rails strong params and serializers combined.
+FastAPI handles routing, request validation, and auth middleware. Route handlers are organized by resource (`auth`, `todos`, `notifications`) using `APIRouter`. Pydantic schemas define what shape data is accepted and returned.
 
 ### Database: SQLAlchemy + SQLite
 
-SQLAlchemy is used as the ORM with SQLite as the database. Rather than introducing Alembic for migrations, the schema is created on startup via `Base.metadata.create_all()`. This is appropriate for a locally-run exercise with a fixed schema. In production I would use Alembic migrations (the Python equivalent of `rails db:migrate`).
+SQLAlchemy is used as the ORM with SQLite as the database. Rather than introducing Alembic for migrations, the schema is created on startup via `Base.metadata.create_all()`. This is appropriate for a locally-run exercise with a fixed schema. In production, I would use Alembic migrations with PostgreSQL.
 
-SQLite was chosen over PostgreSQL specifically to eliminate local setup friction. The only trade-off is that SQLite has limited concurrency under write-heavy load — not a concern at this scale.
+SQLite was chosen over PostgreSQL specifically to eliminate local setup friction. The only trade-off is that SQLite has limited concurrency under write-heavy load — not a concern at this scale.  In production, we would switch to PostgreSQL with Celery for better performance and reliability under concurrent access.
 
 ### Authentication: JWT + bcrypt
 
-On login, the server issues a signed JWT token. The client stores it in `localStorage` and sends it as a `Bearer` header on subsequent requests. A FastAPI `Depends()` guard decodes and validates the token on every protected route — equivalent to `before_action :authenticate_user!` in Rails.
+On login, the server issues a signed JWT token. The client stores it in `localStorage` and sends it as a `Bearer` header on subsequent requests. A FastAPI `Depends()` guard decodes and validates the token on every protected route.
 
 Passwords are hashed with bcrypt directly. Raw passwords are never stored or logged.
 
 ### Reminder System: APScheduler
 
-When a todo is created or updated with a due date, a background job is scheduled using APScheduler's `BackgroundScheduler`. The job runs outside the request cycle — the HTTP response returns immediately and the reminder fires separately.
+When a todo is created or updated with a due date, a background job is scheduled using APScheduler's `BackgroundScheduler`. The job runs outside the request cycle — the HTTP response returns immediately and the reminder fires separately in the background.
 
 **Timing:** Jobs fire 24 hours before the due date. If the due date is already within 24 hours, the job fires 3 seconds after scheduling (for local demo visibility).
 
@@ -87,15 +87,15 @@ When a todo is created or updated with a due date, a background job is scheduled
 
 **Race condition handling:** Each todo's reminder job uses `reminder_{todo_id}` as its job ID, combined with `replace_existing=True`. This makes scheduling idempotent — if a due date changes, the existing job is atomically replaced rather than duplicated. No separate deduplication logic is needed.
 
-**Failure handling:** The job function re-checks the todo's current state before acting. If the todo was deleted or marked complete after the job was scheduled, the job exits silently without creating a notification. Failures are logged with enough context to diagnose.
+**Failure handling:** The job function re-checks the todo's current state before acting. If the todo was deleted or marked complete after the job was scheduled, the job exits silently without creating a notification.
 
-**Production note:** For a production system I would replace APScheduler with Celery + Redis — a dedicated worker process with a proper message broker. APScheduler running in-process is simpler for local development but ties job execution to the web process lifetime. The Celery equivalent in the Rails world is Sidekiq + Redis.
+**Production note:** For a production system I would replace APScheduler with Celery + Redis — a dedicated worker process with a proper message broker. APScheduler running in-process is simpler for local development but ties job execution to the web process lifetime.
 
 ### Frontend
 
 React with Vite. The frontend is intentionally minimal — this is not a design exercise — but several deliberate architectural choices are worth noting.
 
-**Auth state via React Context.** `AuthContext` holds the JWT token and exposes `login`/`logout` to any component via `useAuth()`, without prop drilling. Token is initialized from `localStorage` so page refreshes don't log the user out. This is the standard React pattern for global state that doesn't warrant a full library like Redux.
+**Auth state via React Context.** `AuthContext` holds the JWT token and exposes `login`/`logout` to any component via `useAuth()`, without prop drilling. Token is initialized from `localStorage` so page refreshes don't log the user out. Global auth state without adding Redux as a dependency.
 
 **Centralized API layer.** All network calls go through a single `request()` function in `src/api.js` that handles auth headers, JSON serialization, error throwing, and the 204 no-content edge case. No raw `fetch` calls are scattered across components.
 
@@ -122,7 +122,7 @@ This project was built with Claude Code (Anthropic) as the primary AI tool.
 
 - **No Alembic.** Claude's initial suggestion included Alembic for migrations. I pushed back — for a locally-run SQLite exercise with no schema evolution needed, `create_all()` is simpler and easier to explain. Using Alembic here would add complexity without adding value.
 
-- **APScheduler over Celery.** The default AI suggestion trended toward Celery + Redis as the "correct" background job answer. I chose APScheduler specifically because it eliminates the Redis dependency for local setup, and the persistent job store still satisfies the spec's restart-recovery requirement. The trade-off is documented and I can defend it.
+- **APScheduler over Celery.** The default AI suggestion trended toward Celery + Redis as the "correct" background job answer. I chose APScheduler specifically because it eliminates the Redis dependency for local setup, and the persistent job store still satisfies the spec's restart-recovery requirement.
 
 - **No router-level class structure.** AI initially suggested class-based route organization. I kept it as flat functions — easier to read and explain in an interview context, and there's no complexity here that warrants the abstraction.
 
