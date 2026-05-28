@@ -93,7 +93,17 @@ When a todo is created or updated with a due date, a background job is scheduled
 
 ### Frontend
 
-React with Vite. Auth state is held in React context backed by `localStorage`. The dashboard polls the API every 10 seconds to surface new notifications as reminder jobs complete. All API calls are centralized in `src/api.js`. Notifications can be marked as read via `PATCH /api/notifications/{id}/read`, which the frontend uses to distinguish new vs already-seen items. Successful registration immediately logs the user in (no redundant login step). Delete requires a confirmation prompt. Notifications are displayed at the top of the dashboard and rendered in local time.
+React with Vite. The frontend is intentionally minimal — this is not a design exercise — but several deliberate architectural choices are worth noting.
+
+**Auth state via React Context.** `AuthContext` holds the JWT token and exposes `login`/`logout` to any component via `useAuth()`, without prop drilling. Token is initialized from `localStorage` so page refreshes don't log the user out. This is the standard React pattern for global state that doesn't warrant a full library like Redux.
+
+**Centralized API layer.** All network calls go through a single `request()` function in `src/api.js` that handles auth headers, JSON serialization, error throwing, and the 204 no-content edge case. No raw `fetch` calls are scattered across components.
+
+**Polling for async results.** The dashboard runs `setInterval` every 10 seconds to surface notifications as background reminder jobs complete. `useCallback` + `useEffect` + `clearInterval` on cleanup is the correct React pattern — no memory leaks on unmount.
+
+**Optimistic local state on mark-read.** Dismissing a notification updates local state in-place rather than refetching everything from the server, avoiding an unnecessary round-trip.
+
+Additional decisions: successful registration immediately logs the user in (no redundant login step); notifications are displayed at the top of the dashboard since reminders are time-sensitive; delete requires a browser confirmation prompt since it's a destructive action with no undo.
 
 ---
 
@@ -134,14 +144,15 @@ A second pass of end-to-end testing surfaced additional issues fixed before subm
 
 ### Human architectural decisions
 
-- Chose SQLite over PostgreSQL to keep local setup to a single command
-- Decided reminder timing (24h before due date, 3s fallback for demo) rather than accepting a generic suggestion
-- Chose `replace_existing=True` on APScheduler jobs as the explicit race condition solution rather than a separate lock/dedup table
-- Kept the frontend deliberately minimal — this is not a design exercise
-- Chose a compound index on `(user_id, created_at)` over a simple `user_id` index — covers the common `list_todos` query pattern and makes the `ORDER BY created_at DESC` free, without needing a separate index for sorting
-- Chose `model_fields_set` to detect an explicit `null` on `due_date` during PUT — a `None`-check alone can't distinguish "field was omitted" from "field was explicitly cleared", which matters for cancelling the scheduled reminder correctly
-- Auto-login after registration rather than redirecting to the login page — user already provided their credentials, making them type again is unnecessary friction
-- Notifications surfaced at the top of the dashboard rather than the bottom — a reminder is time-sensitive and should be the first thing a user sees
+- Chose `replace_existing=True` on APScheduler jobs as the explicit race condition solution — using the todo ID as the job ID makes scheduling idempotent; editing a due date atomically replaces the existing job rather than risking duplicates or requiring a separate lock/dedup table
+- Chose `model_fields_set` to detect an explicit `null` on `due_date` during PUT — a `None`-check alone can't distinguish "field was omitted" from "field was explicitly cleared", which matters for correctly cancelling the scheduled reminder
+- Added compound index `(user_id, created_at)` on both `todos` and `notifications` — covers the common list query pattern and makes `ORDER BY created_at DESC` free without a separate index. Also added a `todo_id` index on `notifications` so SQLAlchemy's cascade-delete lookup doesn't full-scan the table
+- Notifications cascade-delete with their todo — a reminder for a deleted todo is noise, not useful history. The due date is stored directly on the notification record so it's available at fire time, independent of the todo's lifecycle
+- Chose SQLite over PostgreSQL to keep local setup to a single command; the only trade-off is write concurrency under load, which doesn't apply at this scale
+- Chose APScheduler over Celery — eliminates the Redis dependency for local setup, and the SQLite-backed job store satisfies the restart-recovery requirement. Documented trade-off: in production, Celery + Redis provides worker isolation and built-in retry
+- Decided reminder timing (24h before due date, 3s fallback for demo) — the fallback makes the reminder flow observable in a demo session without waiting a day
+- Due dates are stored as UTC midnight and displayed with `timeZone: "UTC"` — treats the date as timezone-invariant so the same calendar date is shown regardless of where the app is viewed
+- Auto-login after registration — user already provided credentials, redirecting to the login page to type them again is unnecessary friction
+- Notifications surfaced at the top of the dashboard — a reminder is time-sensitive and should be the first thing a user sees
 - Delete requires a browser confirmation prompt — destructive action with no undo, the extra click is worth it
-- Added compound index `(user_id, created_at)` on `notifications` for the same reason as `todos` — covers the `list_notifications` scan and makes `ORDER BY created_at DESC` free. Also added a `todo_id` index so SQLAlchemy's cascade-delete lookup (SELECT before DELETE) doesn't full-scan the table
-- Notifications cascade-delete with their todo — a reminder for a deleted todo is noise, not useful history. The due date is now stored directly on the notification record so it's available before deletion, but once a user deletes a task they've made their intent clear and the unread reminder should go with it
+- Kept the frontend deliberately minimal — this is not a design exercise
