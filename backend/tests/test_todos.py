@@ -77,6 +77,22 @@ def test_update_todo_clear_due_date(auth_client):
     assert resp.json()["due_date"] is None
 
 
+def test_omitting_due_date_does_not_clear_it(auth_client):
+    """
+    Sending a PUT without due_date should leave the existing due date untouched.
+    This is the model_fields_set behaviour: an omitted field is not the same as
+    an explicit null. Without this distinction, updating the title would silently
+    clear the due date and cancel the scheduled reminder.
+    """
+    todo_id = auth_client.post(
+        "/api/todos", json={"title": "Task", "due_date": "2026-06-01T00:00:00Z"}
+    ).json()["id"]
+    resp = auth_client.put(f"/api/todos/{todo_id}", json={"title": "Renamed"})
+    assert resp.status_code == 200
+    assert resp.json()["due_date"] is not None
+    assert resp.json()["title"] == "Renamed"
+
+
 def test_update_nonexistent_todo(auth_client):
     resp = auth_client.put("/api/todos/9999", json={"title": "Ghost"})
     assert resp.status_code == 404
