@@ -13,5 +13,6 @@ node_modules/
 # Misc
 .DS_Store
 
-# Claude Code — local settings only, not project files
+# Claude Code — local only, not project files
 .claude/settings.local.json
+.claude/demo_script.md
