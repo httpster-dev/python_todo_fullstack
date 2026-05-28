@@ -46,6 +46,7 @@ def test_login_unknown_email(client):
 
 
 def test_protected_route_without_token(client):
+    # FastAPI's HTTPBearer returns 401 (not 403) when the Authorization header is absent
     resp = client.get("/api/todos")
     assert resp.status_code == 401
 

@@ -1,3 +1,9 @@
+import os
+
+# Set test database before any app module is imported so that app.database
+# initializes its engine against the test file, not todo.db.
+os.environ["DATABASE_URL"] = "sqlite:///./test_api.db"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -6,9 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.database import Base, get_db
 
-TEST_DATABASE_URL = "sqlite:///./test_api.db"
-
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(os.environ["DATABASE_URL"], connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -37,7 +41,7 @@ def client():
 
 @pytest.fixture
 def auth_client(client):
-    """Client with a registered + logged-in user. Returns (client, token)."""
+    """Client with a registered + logged-in user. Returns the authenticated client."""
     client.post("/api/auth/register", json={"email": "user@example.com", "password": "password123"})
     resp = client.post("/api/auth/login", json={"email": "user@example.com", "password": "password123"})
     token = resp.json()["access_token"]
