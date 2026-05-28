@@ -84,12 +84,12 @@ def test_omitting_due_date_does_not_clear_it(auth_client):
     an explicit null. Without this distinction, updating the title would silently
     clear the due date and cancel the scheduled reminder.
     """
-    todo_id = auth_client.post(
+    created = auth_client.post(
         "/api/todos", json={"title": "Task", "due_date": "2026-06-01T00:00:00Z"}
-    ).json()["id"]
-    resp = auth_client.put(f"/api/todos/{todo_id}", json={"title": "Renamed"})
+    ).json()
+    resp = auth_client.put(f"/api/todos/{created['id']}", json={"title": "Renamed"})
     assert resp.status_code == 200
-    assert resp.json()["due_date"] is not None
+    assert resp.json()["due_date"] == created["due_date"]
     assert resp.json()["title"] == "Renamed"
 
 
