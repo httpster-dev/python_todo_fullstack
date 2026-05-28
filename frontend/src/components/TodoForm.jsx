@@ -4,7 +4,7 @@ export default function TodoForm({ onSubmit, initial = {}, onCancel }) {
   const [title, setTitle] = useState(initial.title || "");
   const [description, setDescription] = useState(initial.description || "");
   const [dueDate, setDueDate] = useState(
-    initial.due_date ? new Date(initial.due_date).toISOString().slice(0, 10) : ""
+    initial.due_date ? initial.due_date.slice(0, 10) : ""
   );
   const [error, setError] = useState(null);
 
